@@ -165,19 +165,6 @@
       color: var(--text-secondary);
       letter-spacing: 0.06em;
     }
-    .reload-btn {
-      margin-top: 20px;
-      padding: 10px 28px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-radius: 24px;
-      background: rgba(124,92,252,0.25);
-      color: #fff;
-      font-size: 14px;
-      cursor: pointer;
-      letter-spacing: 0.06em;
-      transition: all 0.3s;
-    }
-    .reload-btn:hover { background: rgba(124,92,252,0.5); border-color: rgba(255,255,255,0.5); }
 
     /* ================================================================
        INTRO OVERLAY
@@ -691,7 +678,6 @@
     <div class="subtitle">宇宙级卡牌抽取系统</div>
     <div class="loader-bar-track"><div class="loader-bar-fill" id="loader-bar"></div></div>
     <div class="load-text" id="load-status">正在初始化...</div>
-    <button class="reload-btn" id="reload-btn" style="display:none;" onclick="location.reload()">🔄 点击重试</button>
   </div>
 
   <!-- ========== INTRO OVERLAY ========== -->
@@ -708,11 +694,6 @@
 
   <!-- ========== THREE.JS CANVAS ========== -->
   <canvas id="three-canvas"></canvas>
-  <div id="webgl-fallback" style="display:none; position:fixed; inset:0; z-index:99999; background:#0a0a1a; color:#e8e8ff; font-family:sans-serif; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px;">
-    <div style="font-size:48px; margin-bottom:16px;">⚠️</div>
-    <div style="font-size:20px; font-weight:700; margin-bottom:8px;">浏览器不支持</div>
-    <div style="font-size:14px; color:#9a9ac8; max-width:300px; line-height:1.6;">此页面需要 WebGL 支持。<br/>请用手机微信打开，或复制链接到 Chrome/Safari 浏览器中打开。</div>
-  </div>
 
   <!-- ========== HEADER ========== -->
   <div id="app-header">
@@ -910,29 +891,11 @@ const PHOTO_DATA_URIS = [
     const introOverlay = $('#intro-overlay');
     const loaderBar = $('#loader-bar');
     const loadStatus = $('#load-status');
-
-    // 全局加载超时保护：25 秒后还没完成就显示重试按钮
-    setTimeout(() => {
-      if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
-        loadStatus.textContent = '⚠️ 加载超时，请检查网络后重试';
-        loaderBar.style.background = '#ef4444';
-        const rb = $('#reload-btn');
-        if (rb) rb.style.display = 'inline-block';
-      }
-    }, 25000);
     const gestureBtn = $('#gesture-btn');
     const gestureCursor = $('#gesture-cursor');
     const toastContainer = $('#toast-container');
     const statTotal = $('#stat-total');
     const statGesture = $('#stat-gesture');
-
-    // 检测桌面微信（GPU 和摄像头共享冲突会导致 WebGL 黑屏）
-    const isDesktopWeChat = /MicroMessenger/i.test(navigator.userAgent) &&
-      /Windows|Mac|Linux/i.test(navigator.userAgent);
-    if (isDesktopWeChat) {
-      const lbl = document.querySelector('#gesture-btn-wrap .btn-label');
-      if (lbl) lbl.textContent = '点击抽卡（桌面微信不支持摄像头）';
-    }
     const historyList = $('#history-list');
     const toggleRainbow = $('#toggle-rainbow');
     const btnToggleStats = $('#btn-toggle-stats');
@@ -1188,50 +1151,12 @@ const PHOTO_DATA_URIS = [
     // ============================================================
     // THREE.JS 场景初始化
     // ============================================================
-    let renderer;
-    try {
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-      renderer.outputEncoding = THREE.sRGBEncoding;
-      renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.2;
-
-      // 渲染兼容性测试：实际渲染一帧并检查是否正常
-      const testScene = new THREE.Scene();
-      testScene.background = new THREE.Color(0xff0000); // 红色背景用于检测
-      renderer.render(testScene, new THREE.Camera());
-      const gl = renderer.getContext();
-      const pixel = new Uint8Array(4);
-      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
-      // 正常渲染应该读到红色 (255,0,0,255)
-      if (pixel[0] > 200 && pixel[1] < 20 && pixel[2] < 20) {
-        window._threeReady = true; // WebGL 渲染正常
-      } else {
-        throw new Error('WebGL 渲染异常（检测到黑屏）');
-      }
-
-      // 监听 WebGL 上下文丢失（桌面微信摄像头激活时常触发）
-      canvas.addEventListener('webglcontextlost', (e) => {
-        e.preventDefault(); // 允许尝试恢复
-        console.warn('⚠️ WebGL 上下文丢失（可能因摄像头激活）');
-        window._webglLost = true;
-      }, false);
-
-      canvas.addEventListener('webglcontextrestored', () => {
-        console.log('✅ WebGL 上下文已恢复');
-        window._webglLost = false;
-        // 强制重渲一帧
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      }, false);
-    } catch (e) {
-      window._reportError('WebGL 初始化失败: ' + e.message, 'js');
-      window._threeReady = false;
-      // 隐藏 canvas，显示兼容提示
-      if (canvas) canvas.style.display = 'none';
-      const fallback = $('#webgl-fallback');
-      if (fallback) { fallback.style.display = 'flex'; }
-    }
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
@@ -1645,15 +1570,11 @@ const PHOTO_DATA_URIS = [
         </div>`
       ).join('');
     }
+
     // ============================================================
     // 手势唤醒按钮
     // ============================================================
     gestureBtn.addEventListener('click', async () => {
-      // 桌面微信跳过摄像头，直接用按钮抽卡
-      if (isDesktopWeChat) {
-        performDraw();
-        return;
-      }
       if (!state.cameraReady && !state._cameraTried) {
         // 首次尝试激活摄像头
         state._cameraTried = true;
@@ -1722,16 +1643,6 @@ const PHOTO_DATA_URIS = [
         });
 
         await cameraInstance.start();
-
-        // 检查摄像头激活是否导致 WebGL 上下文丢失（桌面微信常见问题）
-        if (window._webglLost) {
-          console.warn('⚠️ 摄像头导致 WebGL 上下文丢失，回退到按钮模式');
-          cameraInstance.stop();
-          state._cameraTried = true;
-          statGesture.textContent = '摄像头不兼容，请用按钮抽卡';
-          statGesture.style.color = 'var(--warning)';
-          return; // 不设置 cameraReady，让用户用按钮抽卡
-        }
 
         // 启动成功后，显示摄像头预览小窗（顶部居中）
         previewCanvas.width = 160;
@@ -1959,7 +1870,6 @@ const PHOTO_DATA_URIS = [
     // ============================================================
     btnToggleStats.addEventListener('click', () => {
       state.statsVisible = !state.statsVisible;
-      _autoCollapsed = false; // 用户手动操作，清除自动折叠标记
       if (state.statsVisible) {
         statsPanel.classList.remove('collapsed');
         btnToggleStats.classList.add('active');
@@ -2025,36 +1935,13 @@ const PHOTO_DATA_URIS = [
         { pct: 55, text: '正在加载手势识别模型...', delay: 600 },
         { pct: 75, text: '正在校准 Bloom 后期特效...', delay: 300 },
         { pct: 90, text: '正在准备卡牌纹理...', delay: 300 },
-        { pct: 100, text: '✦ 准备就绪 ✦', delay: 200 },
+        { pct: 100, text: '✦ 准备就绪（照片加载中...）✦', delay: 200 },
       ];
 
       for (const step of steps) {
         loaderBar.style.width = step.pct + '%';
         loadStatus.textContent = step.text;
         await new Promise(r => setTimeout(r, step.delay));
-      }
-
-      // 等待 Three.js 真正初始化完成（最多等 10 秒）
-      let waited = 0;
-      while (!window._threeReady && waited < 10000) {
-        await new Promise(r => setTimeout(r, 200));
-        waited += 200;
-      }
-
-      if (!window._threeReady) {
-        // WebGL 不兼容：直接显示提示页面
-        loadingOverlay.classList.add('hidden');
-        const fallback = $('#webgl-fallback');
-        if (fallback) { fallback.style.display = 'flex'; }
-        return;
-      }
-
-      // 检查 CDN 脚本是否加载成功
-      if (typeof gsap === 'undefined') {
-        loadStatus.textContent = '⚠️ CDN 脚本加载失败，请检查网络后刷新';
-        loaderBar.style.background = '#ef4444';
-        $('#reload-btn').style.display = 'inline-block';
-        return;
       }
 
       // 加载完成后过渡到入场
@@ -2075,9 +1962,6 @@ const PHOTO_DATA_URIS = [
 
     function animate() {
       requestAnimationFrame(animate);
-
-      // WebGL 上下文丢失时跳过渲染（桌面微信摄像头激活时常见）
-      if (window._webglLost || !window._threeReady) return;
 
       const delta = Math.min(clock.getDelta(), 0.1);
       const smoothFactor = 1 - Math.exp(-6 * delta); // 帧率无关的平滑插值
@@ -2136,29 +2020,11 @@ const PHOTO_DATA_URIS = [
     // ============================================================
     // 窗口尺寸响应
     // ============================================================
-    // 小屏自动折叠统计面板
-    let _autoCollapsed = false;
-    function autoCollapseStats() {
-      const small = window.innerWidth < 480;
-      if (small && state.statsVisible) {
-        statsPanel.classList.add('collapsed');
-        state.statsVisible = false;
-        btnToggleStats.classList.remove('active');
-        _autoCollapsed = true;
-      } else if (!small && _autoCollapsed) {
-        statsPanel.classList.remove('collapsed');
-        state.statsVisible = true;
-        btnToggleStats.classList.add('active');
-        _autoCollapsed = false;
-      }
-    }
     window.addEventListener('resize', () => {
-      if (!window._threeReady || !renderer) return;
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
       composer.setSize(window.innerWidth, window.innerHeight);
-      autoCollapseStats();
     });
 
     // 键盘快捷键 (调试用)
@@ -2205,7 +2071,6 @@ const PHOTO_DATA_URIS = [
     // ============================================================
     animate();
     simulateLoading();
-    autoCollapseStats();
 
     console.log('%c🚀 Cosmic Card Draw %c已就绪',
       'color:#c084fc;font-size:16px;', '');
