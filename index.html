@@ -1768,8 +1768,8 @@ const PHOTO_DATA_URIS = [
         const deltaY = palm.y - state.prevPalmY;
 
         if (Math.abs(deltaX) > 0.003 || Math.abs(deltaY) > 0.003) {
-          state.targetRotY += deltaX * 3.0;
-          state.targetRotX += deltaY * 2.0;
+          state.targetRotY += deltaX * 5.0;
+          state.targetRotX += deltaY * 3.5;
         }
 
         state.handState = 'open_palm';
@@ -1928,10 +1928,10 @@ const PHOTO_DATA_URIS = [
           brightStars.rotation.x = stars.rotation.x * 1.1;
         } else {
           // 默认自动旋转
-          stars.rotation.y += delta * 0.04;
-          stars.rotation.x += delta * 0.015;
-          brightStars.rotation.y += delta * 0.06;
-          brightStars.rotation.x += delta * 0.02;
+          stars.rotation.y += delta * 0.07;
+          stars.rotation.x += delta * 0.025;
+          brightStars.rotation.y += delta * 0.10;
+          brightStars.rotation.x += delta * 0.035;
         }
       }
 
