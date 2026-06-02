@@ -925,6 +925,14 @@ const PHOTO_DATA_URIS = [
     const toastContainer = $('#toast-container');
     const statTotal = $('#stat-total');
     const statGesture = $('#stat-gesture');
+
+    // 检测桌面微信（GPU 和摄像头共享冲突会导致 WebGL 黑屏）
+    const isDesktopWeChat = /MicroMessenger/i.test(navigator.userAgent) &&
+      /Windows|Mac|Linux/i.test(navigator.userAgent);
+    if (isDesktopWeChat) {
+      const lbl = document.querySelector('#gesture-btn-wrap .btn-label');
+      if (lbl) lbl.textContent = '点击抽卡（桌面微信不支持摄像头）';
+    }
     const historyList = $('#history-list');
     const toggleRainbow = $('#toggle-rainbow');
     const btnToggleStats = $('#btn-toggle-stats');
@@ -1637,11 +1645,15 @@ const PHOTO_DATA_URIS = [
         </div>`
       ).join('');
     }
-
     // ============================================================
     // 手势唤醒按钮
     // ============================================================
     gestureBtn.addEventListener('click', async () => {
+      // 桌面微信跳过摄像头，直接用按钮抽卡
+      if (isDesktopWeChat) {
+        performDraw();
+        return;
+      }
       if (!state.cameraReady && !state._cameraTried) {
         // 首次尝试激活摄像头
         state._cameraTried = true;
