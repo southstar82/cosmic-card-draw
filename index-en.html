@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Cosmic Card Draw | AR版 3D卡牌抽取</title>
 
   <!-- ========== 全局错误捕获脚本 ========== -->
@@ -162,6 +165,19 @@
       color: var(--text-secondary);
       letter-spacing: 0.06em;
     }
+    .reload-btn {
+      margin-top: 20px;
+      padding: 10px 28px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 24px;
+      background: rgba(124,92,252,0.25);
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: all 0.3s;
+    }
+    .reload-btn:hover { background: rgba(124,92,252,0.5); border-color: rgba(255,255,255,0.5); }
 
     /* ================================================================
        INTRO OVERLAY
@@ -675,6 +691,7 @@
     <div class="subtitle">宇宙级卡牌抽取系统</div>
     <div class="loader-bar-track"><div class="loader-bar-fill" id="loader-bar"></div></div>
     <div class="load-text" id="load-status">正在初始化...</div>
+    <button class="reload-btn" id="reload-btn" style="display:none;" onclick="location.reload()">🔄 点击重试</button>
   </div>
 
   <!-- ========== INTRO OVERLAY ========== -->
@@ -888,6 +905,16 @@ const PHOTO_DATA_URIS = [
     const introOverlay = $('#intro-overlay');
     const loaderBar = $('#loader-bar');
     const loadStatus = $('#load-status');
+
+    // 全局加载超时保护：25 秒后还没完成就显示重试按钮
+    setTimeout(() => {
+      if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+        loadStatus.textContent = '⚠️ 加载超时，请检查网络后重试';
+        loaderBar.style.background = '#ef4444';
+        const rb = $('#reload-btn');
+        if (rb) rb.style.display = 'inline-block';
+      }
+    }, 25000);
     const gestureBtn = $('#gesture-btn');
     const gestureCursor = $('#gesture-cursor');
     const toastContainer = $('#toast-container');
@@ -1148,12 +1175,20 @@ const PHOTO_DATA_URIS = [
     // ============================================================
     // THREE.JS 场景初始化
     // ============================================================
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.outputEncoding = THREE.sRGBEncoding;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2;
+      window._threeReady = true; // 标记 Three.js 已初始化
+    } catch (e) {
+      window._reportError('WebGL 初始化失败，您的设备可能不支持: ' + e.message, 'js');
+      window._threeReady = false;
+      throw e;
+    }
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
@@ -1933,13 +1968,35 @@ const PHOTO_DATA_URIS = [
         { pct: 55, text: '正在加载手势识别模型...', delay: 600 },
         { pct: 75, text: '正在校准 Bloom 后期特效...', delay: 300 },
         { pct: 90, text: '正在准备卡牌纹理...', delay: 300 },
-        { pct: 100, text: '✦ 准备就绪（照片加载中...）✦', delay: 200 },
+        { pct: 100, text: '✦ 准备就绪 ✦', delay: 200 },
       ];
 
       for (const step of steps) {
         loaderBar.style.width = step.pct + '%';
         loadStatus.textContent = step.text;
         await new Promise(r => setTimeout(r, step.delay));
+      }
+
+      // 等待 Three.js 真正初始化完成（最多等 10 秒）
+      let waited = 0;
+      while (!window._threeReady && waited < 10000) {
+        await new Promise(r => setTimeout(r, 200));
+        waited += 200;
+      }
+
+      if (!window._threeReady) {
+        loadStatus.textContent = '⚠️ 渲染引擎初始化失败，请刷新重试';
+        loaderBar.style.background = '#ef4444';
+        $('#reload-btn').style.display = 'inline-block';
+        return;
+      }
+
+      // 检查 CDN 脚本是否加载成功
+      if (typeof gsap === 'undefined') {
+        loadStatus.textContent = '⚠️ CDN 脚本加载失败，请检查网络后刷新';
+        loaderBar.style.background = '#ef4444';
+        $('#reload-btn').style.display = 'inline-block';
+        return;
       }
 
       // 加载完成后过渡到入场
