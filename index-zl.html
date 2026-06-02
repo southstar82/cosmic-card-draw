@@ -1200,6 +1200,20 @@ const PHOTO_DATA_URIS = [
       } else {
         throw new Error('WebGL 渲染异常（检测到黑屏）');
       }
+
+      // 监听 WebGL 上下文丢失（桌面微信摄像头激活时常触发）
+      canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault(); // 允许尝试恢复
+        console.warn('⚠️ WebGL 上下文丢失（可能因摄像头激活）');
+        window._webglLost = true;
+      }, false);
+
+      canvas.addEventListener('webglcontextrestored', () => {
+        console.log('✅ WebGL 上下文已恢复');
+        window._webglLost = false;
+        // 强制重渲一帧
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }, false);
     } catch (e) {
       window._reportError('WebGL 初始化失败: ' + e.message, 'js');
       window._threeReady = false;
@@ -1695,6 +1709,16 @@ const PHOTO_DATA_URIS = [
 
         await cameraInstance.start();
 
+        // 检查摄像头激活是否导致 WebGL 上下文丢失（桌面微信常见问题）
+        if (window._webglLost) {
+          console.warn('⚠️ 摄像头导致 WebGL 上下文丢失，回退到按钮模式');
+          cameraInstance.stop();
+          state._cameraTried = true;
+          statGesture.textContent = '摄像头不兼容，请用按钮抽卡';
+          statGesture.style.color = 'var(--warning)';
+          return; // 不设置 cameraReady，让用户用按钮抽卡
+        }
+
         // 启动成功后，显示摄像头预览小窗（顶部居中）
         previewCanvas.width = 160;
         previewCanvas.height = 120;
@@ -2037,6 +2061,9 @@ const PHOTO_DATA_URIS = [
 
     function animate() {
       requestAnimationFrame(animate);
+
+      // WebGL 上下文丢失时跳过渲染（桌面微信摄像头激活时常见）
+      if (window._webglLost || !window._threeReady) return;
 
       const delta = Math.min(clock.getDelta(), 0.1);
       const smoothFactor = 1 - Math.exp(-6 * delta); // 帧率无关的平滑插值
