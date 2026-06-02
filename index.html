@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Cosmic Card Draw | AR版 3D卡牌抽取</title>
 
   <!-- ========== 全局错误捕获脚本 ========== -->
@@ -162,6 +165,19 @@
       color: var(--text-secondary);
       letter-spacing: 0.06em;
     }
+    .reload-btn {
+      margin-top: 20px;
+      padding: 10px 28px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 24px;
+      background: rgba(124,92,252,0.25);
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: all 0.3s;
+    }
+    .reload-btn:hover { background: rgba(124,92,252,0.5); border-color: rgba(255,255,255,0.5); }
 
     /* ================================================================
        INTRO OVERLAY
@@ -290,18 +306,18 @@
        ================================================================ */
     #stats-panel {
       position: fixed;
-      top: 100px;
-      right: 16px;
+      top: 8px;
+      right: 8px;
       z-index: 100;
-      width: min(260px, 80vw);
+      width: 180px;
       background: var(--glass-bg);
       backdrop-filter: blur(20px) saturate(140%);
       -webkit-backdrop-filter: blur(20px) saturate(140%);
       border: 1px solid var(--glass-border);
-      border-radius: var(--radius);
-      padding: 18px 16px;
+      border-radius: 10px;
+      padding: 8px 10px;
       color: var(--text-primary);
-      font-size: 13px;
+      font-size: 10px;
       transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s;
     }
     #stats-panel.collapsed {
@@ -310,29 +326,29 @@
       pointer-events: none;
     }
     .stats-title {
-      font-size: 11px;
+      font-size: 9px;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       color: var(--text-secondary);
-      margin-bottom: 10px;
+      margin-bottom: 6px;
     }
     .stat-row {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 6px 0;
+      padding: 3px 0;
       border-bottom: 1px solid rgba(255,255,255,0.05);
     }
     .stat-row:last-child { border-bottom: none; }
-    .stat-label { color: var(--text-secondary); font-size: 12px; }
-    .stat-value { font-weight: 600; font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: 13px; }
+    .stat-label { color: var(--text-secondary); font-size: 9px; }
+    .stat-value { font-weight: 600; font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: 10px; }
     .toggle-switch {
-      position: relative; width: 44px; height: 24px;
+      position: relative; width: 36px; height: 20px;
       background: rgba(255,255,255,0.1);
-      border-radius: 12px; cursor: pointer;
+      border-radius: 10px; cursor: pointer;
       transition: background 0.3s;
     }
     .toggle-switch::after {
       content: ''; position: absolute; top: 2px; left: 2px;
-      width: 20px; height: 20px; border-radius: 50%;
+      width: 16px; height: 16px; border-radius: 50%;
       background: #ccc;
       transition: all 0.3s;
     }
@@ -340,17 +356,17 @@
       background: linear-gradient(135deg, #f06bf0, #7c5cfc, #60a5fa);
     }
     .toggle-switch.on::after {
-      left: 22px; background: #fff;
+      left: 18px; background: #fff;
       box-shadow: 0 0 12px rgba(255,255,255,0.6);
     }
     .history-list {
-      max-height: 120px; overflow-y: auto;
-      margin-top: 4px;
-      font-size: 11px;
+      max-height: 80px; overflow-y: auto;
+      margin-top: 2px;
+      font-size: 9px;
     }
     .history-item {
-      padding: 3px 6px; border-radius: 4px;
-      margin-bottom: 2px;
+      padding: 2px 4px; border-radius: 3px;
+      margin-bottom: 1px;
       display: flex; justify-content: space-between;
       background: rgba(255,255,255,0.03);
     }
@@ -370,14 +386,35 @@
 
     @media (max-width: 768px) {
       #stats-panel {
-        right: 8px; top: 80px;
-        width: 220px;
-        padding: 12px;
-        font-size: 11px;
-        border-radius: 12px;
+        right: 4px; top: 6px;
+        width: 150px;
+        padding: 6px 8px;
+        font-size: 9px;
+        border-radius: 8px;
       }
       #stats-panel.collapsed {
-        transform: translateX(calc(100% + 12px));
+        transform: translateX(calc(100% + 8px));
+      }
+      #stats-panel .history-list { max-height: 50px; }
+    }
+    @media (max-width: 400px) {
+      #stats-panel {
+        right: 2px; top: 4px;
+        width: 120px;
+        padding: 5px 6px;
+        font-size: 8px;
+        border-radius: 6px;
+      }
+      #stats-panel .stats-title { font-size: 7px; margin-bottom: 3px; }
+      #stats-panel .stat-row { padding: 1px 0; }
+      #stats-panel .stat-label { font-size: 7px; }
+      #stats-panel .stat-value { font-size: 8px; }
+      #stats-panel .history-list { max-height: 40px; font-size: 7px; }
+      #stats-panel .toggle-switch { width: 28px; height: 16px; }
+      #stats-panel .toggle-switch::after { width: 12px; height: 12px; }
+      #stats-panel .toggle-switch.on::after { left: 14px; }
+      #stats-panel.collapsed {
+        transform: translateX(calc(100% + 4px));
       }
     }
 
@@ -462,43 +499,70 @@
        ================================================================ */
     #gesture-guide {
       position: fixed;
-      top: 50%; left: 20px;
-      transform: translateY(-50%);
+      top: 8px;
+      left: 8px;
       z-index: 200;
       background: var(--glass-bg);
       backdrop-filter: blur(16px) saturate(140%);
       -webkit-backdrop-filter: blur(16px) saturate(140%);
       border: 1px solid var(--glass-border);
-      border-radius: 12px;
-      padding: 14px 12px;
-      font-size: 11px;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 10px;
       color: var(--text-secondary);
       display: none;
       flex-direction: column;
-      gap: 8px;
-      min-width: 140px;
+      gap: 4px;
+      min-width: 120px;
+      max-width: 160px;
     }
     #gesture-guide.visible { display: flex; }
     #gesture-guide .guide-title {
-      font-size: 10px;
-      letter-spacing: 0.1em;
+      font-size: 9px;
+      letter-spacing: 0.06em;
       color: var(--accent);
       text-align: center;
+      padding-right: 16px;
     }
     #gesture-guide .guide-row {
-      display: flex; align-items: center; gap: 8px;
+      display: flex; align-items: center; gap: 4px;
     }
     #gesture-guide .guide-icon {
-      width: 28px; height: 28px;
+      width: 20px; height: 20px;
       border-radius: 50%;
       background: rgba(255,255,255,0.08);
       display: flex; align-items: center; justify-content: center;
-      font-size: 14px;
+      font-size: 10px;
       flex-shrink: 0;
     }
+    .guide-close {
+      position: absolute;
+      top: 2px; right: 4px;
+      width: 16px; height: 16px;
+      border: none;
+      background: rgba(255,255,255,0.1);
+      color: var(--text-secondary);
+      font-size: 10px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      line-height: 1;
+      padding: 0;
+      transition: background 0.2s, color 0.2s;
+    }
+    .guide-close:hover { background: rgba(255,80,80,0.5); color: #fff; }
     @media (max-width: 768px) {
-      #gesture-guide { left: 6px; padding: 10px 8px; font-size: 10px; min-width: 120px; }
+      #gesture-guide { left: 4px; top: 6px; padding: 6px 6px; font-size: 8px; min-width: 90px; max-width: 130px; border-radius: 8px; gap: 3px; }
+      #gesture-guide .guide-title { font-size: 7px; padding-right: 14px; }
+      #gesture-guide .guide-row { gap: 3px; }
+      #gesture-guide .guide-icon { width: 16px; height: 16px; font-size: 8px; }
       #camera-preview-wrap { bottom: 100px; right: 8px; width: 90px; height: 68px; }
+    }
+    @media (max-width: 400px) {
+      #gesture-guide { left: 2px; top: 4px; padding: 4px 4px; font-size: 7px; min-width: 75px; max-width: 100px; border-radius: 6px; gap: 2px; }
+      #gesture-guide .guide-title { font-size: 6px; padding-right: 12px; }
+      #gesture-guide .guide-icon { width: 14px; height: 14px; font-size: 7px; }
+      .guide-close { top: 1px; right: 2px; width: 14px; height: 14px; font-size: 8px; }
     }
 
     /* ================================================================
@@ -627,6 +691,7 @@
     <div class="subtitle">宇宙级卡牌抽取系统</div>
     <div class="loader-bar-track"><div class="loader-bar-fill" id="loader-bar"></div></div>
     <div class="load-text" id="load-status">正在初始化...</div>
+    <button class="reload-btn" id="reload-btn" style="display:none;" onclick="location.reload()">🔄 点击重试</button>
   </div>
 
   <!-- ========== INTRO OVERLAY ========== -->
@@ -695,6 +760,7 @@
 
   <!-- ========== GESTURE GUIDE ========== -->
   <div id="gesture-guide">
+    <button class="guide-close" id="guide-close-btn" title="关闭指南">✕</button>
     <div class="guide-title">✋ 手势指南</div>
     <div class="guide-row">
       <span class="guide-icon">✊</span>
@@ -839,6 +905,16 @@ const PHOTO_DATA_URIS = [
     const introOverlay = $('#intro-overlay');
     const loaderBar = $('#loader-bar');
     const loadStatus = $('#load-status');
+
+    // 全局加载超时保护：25 秒后还没完成就显示重试按钮
+    setTimeout(() => {
+      if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+        loadStatus.textContent = '⚠️ 加载超时，请检查网络后重试';
+        loaderBar.style.background = '#ef4444';
+        const rb = $('#reload-btn');
+        if (rb) rb.style.display = 'inline-block';
+      }
+    }, 25000);
     const gestureBtn = $('#gesture-btn');
     const gestureCursor = $('#gesture-cursor');
     const toastContainer = $('#toast-container');
@@ -1099,12 +1175,20 @@ const PHOTO_DATA_URIS = [
     // ============================================================
     // THREE.JS 场景初始化
     // ============================================================
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.outputEncoding = THREE.sRGBEncoding;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.2;
+      window._threeReady = true; // 标记 Three.js 已初始化
+    } catch (e) {
+      window._reportError('WebGL 初始化失败，您的设备可能不支持: ' + e.message, 'js');
+      window._threeReady = false;
+      throw e;
+    }
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
@@ -1818,6 +1902,7 @@ const PHOTO_DATA_URIS = [
     // ============================================================
     btnToggleStats.addEventListener('click', () => {
       state.statsVisible = !state.statsVisible;
+      _autoCollapsed = false; // 用户手动操作，清除自动折叠标记
       if (state.statsVisible) {
         statsPanel.classList.remove('collapsed');
         btnToggleStats.classList.add('active');
@@ -1867,6 +1952,12 @@ const PHOTO_DATA_URIS = [
       );
     });
 
+    // 手势指南关闭按钮
+    const guideCloseBtn = $('#guide-close-btn');
+    guideCloseBtn.addEventListener('click', () => {
+      gestureGuide.classList.remove('visible');
+    });
+
     // ============================================================
     // 加载流程
     // ============================================================
@@ -1877,13 +1968,35 @@ const PHOTO_DATA_URIS = [
         { pct: 55, text: '正在加载手势识别模型...', delay: 600 },
         { pct: 75, text: '正在校准 Bloom 后期特效...', delay: 300 },
         { pct: 90, text: '正在准备卡牌纹理...', delay: 300 },
-        { pct: 100, text: '✦ 准备就绪（照片加载中...）✦', delay: 200 },
+        { pct: 100, text: '✦ 准备就绪 ✦', delay: 200 },
       ];
 
       for (const step of steps) {
         loaderBar.style.width = step.pct + '%';
         loadStatus.textContent = step.text;
         await new Promise(r => setTimeout(r, step.delay));
+      }
+
+      // 等待 Three.js 真正初始化完成（最多等 10 秒）
+      let waited = 0;
+      while (!window._threeReady && waited < 10000) {
+        await new Promise(r => setTimeout(r, 200));
+        waited += 200;
+      }
+
+      if (!window._threeReady) {
+        loadStatus.textContent = '⚠️ 渲染引擎初始化失败，请刷新重试';
+        loaderBar.style.background = '#ef4444';
+        $('#reload-btn').style.display = 'inline-block';
+        return;
+      }
+
+      // 检查 CDN 脚本是否加载成功
+      if (typeof gsap === 'undefined') {
+        loadStatus.textContent = '⚠️ CDN 脚本加载失败，请检查网络后刷新';
+        loaderBar.style.background = '#ef4444';
+        $('#reload-btn').style.display = 'inline-block';
+        return;
       }
 
       // 加载完成后过渡到入场
@@ -1962,11 +2075,28 @@ const PHOTO_DATA_URIS = [
     // ============================================================
     // 窗口尺寸响应
     // ============================================================
+    // 小屏自动折叠统计面板
+    let _autoCollapsed = false;
+    function autoCollapseStats() {
+      const small = window.innerWidth < 480;
+      if (small && state.statsVisible) {
+        statsPanel.classList.add('collapsed');
+        state.statsVisible = false;
+        btnToggleStats.classList.remove('active');
+        _autoCollapsed = true;
+      } else if (!small && _autoCollapsed) {
+        statsPanel.classList.remove('collapsed');
+        state.statsVisible = true;
+        btnToggleStats.classList.add('active');
+        _autoCollapsed = false;
+      }
+    }
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
       composer.setSize(window.innerWidth, window.innerHeight);
+      autoCollapseStats();
     });
 
     // 键盘快捷键 (调试用)
@@ -2013,6 +2143,7 @@ const PHOTO_DATA_URIS = [
     // ============================================================
     animate();
     simulateLoading();
+    autoCollapseStats();
 
     console.log('%c🚀 Cosmic Card Draw %c已就绪',
       'color:#c084fc;font-size:16px;', '');
