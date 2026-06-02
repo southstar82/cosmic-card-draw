@@ -708,6 +708,11 @@
 
   <!-- ========== THREE.JS CANVAS ========== -->
   <canvas id="three-canvas"></canvas>
+  <div id="webgl-fallback" style="display:none; position:fixed; inset:0; z-index:99999; background:#0a0a1a; color:#e8e8ff; font-family:sans-serif; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px;">
+    <div style="font-size:48px; margin-bottom:16px;">⚠️</div>
+    <div style="font-size:20px; font-weight:700; margin-bottom:8px;">浏览器不支持</div>
+    <div style="font-size:14px; color:#9a9ac8; max-width:300px; line-height:1.6;">此页面需要 WebGL 支持。<br/>请用手机微信打开，或复制链接到 Chrome/Safari 浏览器中打开。</div>
+  </div>
 
   <!-- ========== HEADER ========== -->
   <div id="app-header">
@@ -1176,17 +1181,33 @@ const PHOTO_DATA_URIS = [
     // ============================================================
     let renderer;
     try {
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       renderer.outputEncoding = THREE.sRGBEncoding;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.2;
-      window._threeReady = true; // 标记 Three.js 已初始化
+
+      // 渲染兼容性测试：实际渲染一帧并检查是否正常
+      const testScene = new THREE.Scene();
+      testScene.background = new THREE.Color(0xff0000); // 红色背景用于检测
+      renderer.render(testScene, new THREE.Camera());
+      const gl = renderer.getContext();
+      const pixel = new Uint8Array(4);
+      gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+      // 正常渲染应该读到红色 (255,0,0,255)
+      if (pixel[0] > 200 && pixel[1] < 20 && pixel[2] < 20) {
+        window._threeReady = true; // WebGL 渲染正常
+      } else {
+        throw new Error('WebGL 渲染异常（检测到黑屏）');
+      }
     } catch (e) {
-      window._reportError('WebGL 初始化失败，您的设备可能不支持: ' + e.message, 'js');
+      window._reportError('WebGL 初始化失败: ' + e.message, 'js');
       window._threeReady = false;
-      throw e;
+      // 隐藏 canvas，显示兼容提示
+      if (canvas) canvas.style.display = 'none';
+      const fallback = $('#webgl-fallback');
+      if (fallback) { fallback.style.display = 'flex'; }
     }
 
     const scene = new THREE.Scene();
@@ -1984,9 +2005,10 @@ const PHOTO_DATA_URIS = [
       }
 
       if (!window._threeReady) {
-        loadStatus.textContent = '⚠️ 渲染引擎初始化失败，请刷新重试';
-        loaderBar.style.background = '#ef4444';
-        $('#reload-btn').style.display = 'inline-block';
+        // WebGL 不兼容：直接显示提示页面
+        loadingOverlay.classList.add('hidden');
+        const fallback = $('#webgl-fallback');
+        if (fallback) { fallback.style.display = 'flex'; }
         return;
       }
 
@@ -2091,6 +2113,7 @@ const PHOTO_DATA_URIS = [
       }
     }
     window.addEventListener('resize', () => {
+      if (!window._threeReady || !renderer) return;
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
